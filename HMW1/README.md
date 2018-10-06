@@ -4,12 +4,13 @@ File named homework1.pdf contains the homework description.
 ### Preprocessing:
 Folder data contains the data (file letter.data) and a file named preprocessing.py that will generate the numpy matrixes containing the classifiers inputs and the targets.
 <br />
-To run the preprossing script you just need to type: python3 preprocessing.py
-Optionally if you want to test the Linear Kernel feature Transfomation you can type: python3 preprocessing.py --kernel=True
-After running the preprocessing python script you can load the data using the sklearn joblib function. (E.g: train_x, train_y = joblib.load("data/kernel_train.pkl"))
+To run the preprossing script you just need to type: __python3 preprocessing.py__
+<br />Optionally if you want to test the Linear Kernel feature Transfomation you can type: __python3 preprocessing.py --kernel=True__
+<br />After running the preprocessing python script you can load the data using the sklearn joblib function.
+<br />(E.g: __train_x, train_y = joblib.load("data/kernel_train.pkl")__)
 
 ### Classifiers:
-To run the classifiers you only need to call the respective file. (E.g: running the Perceptron: python3 Perceptron.py)
+To run the classifiers you only need to call the respective file. (E.g: running the Perceptron: __python3 Perceptron.py__)
 
 ## Requirements:
 python 3.6.6
