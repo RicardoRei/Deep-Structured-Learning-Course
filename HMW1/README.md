@@ -13,8 +13,8 @@ To run the classifiers you only need to call the respective file. (E.g: running 
 
 ## Requirements:
 python 3.6.6
-numpy 1.15.2
-matplotlib 3.0.0
-sklearn 0.20.0
-tqdm 4.26.0
+<br />numpy 1.15.2
+<br />matplotlib 3.0.0
+<br />sklearn 0.20.0
+<br />tqdm 4.26.0
 
