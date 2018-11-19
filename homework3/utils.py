@@ -34,6 +34,7 @@ def train(model, train_loader, dev_loader, optim="Adam", lr=0.001, weight_decay=
     loss_func = nn.CrossEntropyLoss()
     train_accuracy = [evaluate(model, train_loader)]
     dev_accuracy = [evaluate(model, dev_loader)]
+    losses = []
     print ("Train Accuracy: {0:.6f} Dev Accuracy: {1:.6f}".format(train_accuracy[0], dev_accuracy[0]))
     print ("Starting training...")
     for epoch in range(epochs):
@@ -59,10 +60,11 @@ def train(model, train_loader, dev_loader, optim="Adam", lr=0.001, weight_decay=
         # evaluate the model over training and dev sets.
         train_accuracy.append(evaluate(model, train_loader))
         dev_accuracy.append(evaluate(model, dev_loader))
+        losses.append(total_loss/len(train_loader))
         print ("Loss: {0:.6f} Train Accuracy: {1:.6f} Dev Accuracy: {2:.6f}".format(
-            total_loss/len(train_loader), train_accuracy[-1], dev_accuracy[-1])
+                losses[-1], train_accuracy[-1], dev_accuracy[-1])
         )
-    return model, train_accuracy, dev_accuracy
+    return model, train_accuracy, dev_accuracy, losses
 
 def evaluate(model, dataloader):
     """
@@ -92,6 +94,20 @@ def plot_train(train_accuracy, dev_accuracy, filename):
     plt.xlabel("epochs")
     plt.ylabel("Accuracy")
     plt.plot(x_axis, dev_accuracy, 'b-', linewidth=1, label='Dev')
+    plt.legend()
+    plt.savefig("plots/"+filename)
+    plt.gcf().clear()
+
+def plot_loss(losses, filename):
+    """
+    Function to Plot the loss function during the training..
+    :param losses: List containing the losses over epoch.
+    :param filename: Name of the file that will save the plot.
+    """
+    x_axis = [epoch+1 for epoch in range(len(losses))]
+    plt.xlabel("epochs")
+    plt.ylabel("CrossEntropyLoss")
+    plt.plot(x_axis, losses, 'r-', linewidth=1, label='Train loss')
     plt.legend()
     plt.savefig("plots/"+filename)
     plt.gcf().clear()

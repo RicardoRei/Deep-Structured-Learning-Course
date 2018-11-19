@@ -35,8 +35,37 @@ class ConvNN1(nn.Module):
         first_pooling = self.first_pooling(self.activation(first_conv))
         second_conv = self.second_conv(first_pooling)
         second_pooling = self.second_pooling(self.activation(second_conv))
+        print (first_conv.shape)
+        print (first_pooling.shape)
+        print (second_conv.shape)
+        print (second_pooling.shape)
+        exit()
         second_pooling = second_pooling.view(-1, 4*8*30)
         return self.affine(second_pooling)
+
+    def print_filters(self):
+        layer1_weights = self.first_conv.weight.cpu().data.numpy()
+        layer2_weights = self.second_conv.weight.cpu().data.numpy()
+        random_channels = np.random.randint(0, layer1_weights.shape[0], 3)
+        while not np.unique(random_channels).shape == random_channels.shape:
+            random_channels = np.random.randint(0, layer1_weights.shape[0], 3)
+        for i in random_channels:
+            random_filter = layer1_weights[i, 0, :]
+            plt.imshow(random_filter, cmap='magma', interpolation='nearest')
+            plt.savefig("plots/cnn-layer-1-filter{}-magma.png".format(i), bbox_inches='tight')
+            plt.imshow(random_filter, cmap='gray', interpolation='nearest')
+            plt.savefig("plots/cnn-layer-1-filter{}-grey.png".format(i), bbox_inches='tight')
+        random_channels = np.random.randint(0, layer2_weights.shape[0], 3)
+        while not np.unique(random_channels).shape == random_channels.shape:
+            random_channels = np.random.randint(0, layer2_weights.shape[0], 3)
+
+        random_depth = np.random.randint(0, layer2_weights.shape[1], 3)
+        for i in range(3):
+            random_filter = layer2_weights[random_channels[i], random_depth[i], :]
+            plt.imshow(random_filter, cmap='magma', interpolation='nearest')
+            plt.savefig("plots/cnn-layer-2-filter{}-magma.png".format(i), bbox_inches='tight')
+            plt.imshow(random_filter, cmap='gray', interpolation='nearest')
+            plt.savefig("plots/cnn-layer-2-filter{}-grey.png".format(i), bbox_inches='tight')
 
 class ConvNN2(nn.Module):
     """ This model is similar to the last one but with a multi-layer perceptron on top. """
@@ -71,6 +100,7 @@ class ConvNN2(nn.Module):
         second_pooling = second_pooling.view(-1, 2*4*30)
         mlp_hidden_out = self.mlp_activation(self.mlp_l0_linear(second_pooling))
         return self.mlp_l1_linear(mlp_hidden_out)
+
 
 class ConvNN3(nn.Module):
     """ This model is similar to the last one but with one more convolution layer before the MLP. """
@@ -122,15 +152,19 @@ def main():
     parser.add_argument("--cuda", type=bool, default=True, help="Flag to train the model in CUDA.")
     parser.add_argument("--model", type=str, default="ConvNN", help="Model class to be used.")
     parser.add_argument("--weight_decay", type=float, default=0., help="Optimizer weight decay parameter.")
+    parser.add_argument("--filters", type=bool, default=False, help="Flag to print the 2 randomly selected filters.")
     args = parser.parse_args()
     
     # Load data.
     train_x, train_y = joblib.load("data/train.pkl")
     dev_x, dev_y = joblib.load("data/dev.pkl")
+    test_x, test_y = joblib.load("data/test.pkl")
     train_data = utils.TensorDataset(torch.from_numpy(train_x), torch.from_numpy(train_y))
     dev_data = utils.TensorDataset(torch.from_numpy(dev_x), torch.from_numpy(dev_y))
+    test_data = utils.TensorDataset(torch.from_numpy(test_x), torch.from_numpy(test_y))
     train_loader = utils.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     dev_loader = utils.DataLoader(dev_data, batch_size=args.batch_size, shuffle=True)
+    test_loader = utils.DataLoader(test_data, batch_size=args.batch_size, shuffle=True)
 
     # Create model.
     if args.model == "ConvNN2":
@@ -142,12 +176,15 @@ def main():
 
     print ("Model: {}".format(conv_nn.__class__.__name__))
     # Train
-    model, train_accuracy, dev_accuracy = train(
+    model, train_accuracy, dev_accuracy, losses = train(
         conv_nn, train_loader, dev_loader, optim=args.optim, epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay
     )
-
+    plot_loss(losses, "{}-losses.png".format(args.model))
     plot_train(train_accuracy, dev_accuracy, "{}-train-accuracy.png".format(args.model))
+    print ("Test Accuracy: {0:.6f}".format(evaluate(model, test_loader)))
 
-    
+    if args.filters:
+        model.print_filters()
+
 if __name__ == '__main__':
     main()

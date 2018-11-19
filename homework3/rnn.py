@@ -9,7 +9,7 @@ import argparse
 class BiLSTM(nn.Module):
     """ OCR BiLSTM for exercise 2.1 of homework 3. This module takes as input a sequence of flatten image (128 dims),
         runs a feed-forward layer and then it passes the computed representations to a BiLSTM.  """
-    def __init__(self, input_size, n_classes, hidden_size, num_layers=2, activation="Sigmoid"):
+    def __init__(self, input_size, n_classes, hidden_size, num_layers=2, dropout=0., activation="Sigmoid"):
         """
         :param input_size: Number of input feature (128).
         :param n_classes: Number of classes (26).
@@ -49,7 +49,7 @@ class ConvLSTM(nn.Module):
         transforms it into a matrix 8x16, runs a convolution layer and then it passes the computed representation to
         a BiLSTM.  
     """
-    def __init__(self, input_size, n_classes, hidden_size, num_layers=2, activation="Sigmoid"):
+    def __init__(self, input_size, n_classes, hidden_size, num_layers=2, dropout=0., activation="Sigmoid"):
         """
         :param input_size: Number of input feature (128).
         :param n_classes: Number of classes (26).
@@ -91,6 +91,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", type=int, default=5, help="Epochs to run.")
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate to be used.")
+    parser.add_argument("--dropout", type=float, default=0.1, help="Dropout to be applied between hidden layers (ignored if num_layers < 2).")
     parser.add_argument("--optim", type=str, default="Adam", help="Optimizer function name.")
     parser.add_argument("--cuda", type=bool, default=True, help="Flag to train the model in CUDA.")
     parser.add_argument("--hidden_size", type=int, default=256, help="Size of the LSTM hiddens.")
@@ -101,10 +102,13 @@ def main():
     # Load data.
     train_x, train_y = joblib.load("data/seq_train.pkl")
     dev_x, dev_y = joblib.load("data/seq_dev.pkl")
+    test_x, test_y = joblib.load("data/seq_test.pkl")
     train_data = OCRSeqDataset(train_x, train_y)
     dev_data = OCRSeqDataset(dev_x, dev_y)
+    test_data = OCRSeqDataset(test_x, test_y)
     train_loader = utils.DataLoader(train_data, shuffle=True)
     dev_loader = utils.DataLoader(dev_data, shuffle=True)
+    test_loader = utils.DataLoader(test_data, shuffle=True)
 
     # Create Model.
     if args.model == "ConvLSTM":
@@ -113,9 +117,13 @@ def main():
         lstm = BiLSTM(train_x[0].shape[1], 26, args.hidden_size, args.num_layers, args.dropout)
 
     print ("Model: {}".format(lstm.__class__.__name__))
-    lstm, train_accuracy, dev_accuracy = train(
+    lstm, train_accuracy, dev_accuracy, losses = train(
         lstm, train_loader, dev_loader, optim=args.optim, epochs=args.epochs, lr=args.lr, cuda=args.cuda
     )
+
+    plot_loss(losses, "{}-losses.png".format(args.model))
     plot_train(train_accuracy, dev_accuracy, "{}-train-accuracy.png".format(args.model))
+    print ("Test Accuracy: {0:.6f}".format(evaluate(lstm, test_loader)))
+
 if __name__ == '__main__':
     main()

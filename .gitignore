@@ -4,8 +4,10 @@ __pycache__/
 *$py.class
 
 #cache files
+*.fuse*
 *._.*
 *._*
+*.DS_Store*
 *.DS_Store
 # C extensions
 *.so
